@@ -1,9 +1,6 @@
 
 $(document).ready(function(){
     let idDict = {};
-    let fmrResp = [];
-
-    // Handle checkbox changes
     $('input[type="checkbox"]').change(function(){
         if ($(this).prop('checked')) {
             idDict[$(this).data('name')] = $(this).data('id');
@@ -19,21 +16,17 @@ $(document).ready(function(){
         $(".amenities h4").text(amenityList.length > 0 ? amenityList.join(',') : '\u00A0');
     });
 
-    // Handle button click
     $('button').click(function () {
         let List = Object.values(idDict);
-        if (arraysEqual(List, fmrResp)) {
-            return;
-        }
-        fmrResp = List.slice();
         let requestInfo = {
             amenities: List
         };
 
         if (List.length === 0) {
+            $("section.places").empty();
             return;
         }
-        // Make a POST request to places_search
+
         $.post({
             url: "http://localhost:5001/api/v1/places_search",
             data: JSON.stringify(requestInfo),
@@ -45,7 +38,6 @@ $(document).ready(function(){
         });
     });
 
-    // Check API status
     $.getJSON("http://localhost:5001/api/v1/status", (response) => {
         console.log(response);
         if (response.status === 'OK') {
@@ -55,8 +47,8 @@ $(document).ready(function(){
         }
     });
 
-    // Function to add places to HTML
     function addToHtml(response) {
+        $("section.places").empty();
         response.forEach(place => {
             $("section.places").append(
                 `<article>
@@ -75,13 +67,5 @@ $(document).ready(function(){
                 </article>`
             );
         });
-    }
-    // Function to compare arrays
-    function arraysEqual(arr1, arr2) {
-        if (arr1.length !== arr2.length) return false;
-        for (let i = 0; i < arr1.length; i++) {
-            if (arr1[i] !== arr2[i]) return false;
-        }
-        return true;
     }
 });
