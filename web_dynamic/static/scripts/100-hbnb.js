@@ -1,55 +1,48 @@
 
 $(document).ready(function(){
-    let idDict = {};
-    $('.amenities input[type="checkbox"]').change(function(){
-        if ($(this).prop('checked')) {
-            idDict[$(this).data('name')] = $(this).data('id');
-            console.log(idDict);
-        } else {
-            delete idDict[$(this).data('name')];
-        }
-        let amenityList = [];
-        for (const key in idDict) {
-            if (idDict[key] !== undefined) {
-                amenityList.push(key);
-            }
-        }
-        $(".amenities h4").text(amenityList.length > 0 ? amenityList.join(',') : '\u00A0');
-    });
+    const states = {};
+    const amenities = {};
+    const cities = {};
 
-    let idDict2 = {};
-    $('.locations input[type="checkbox"]').change(function(){
-        if ($(this).prop('checked')) {
-            idDict2[$(this).data('name')] = $(this).data('id');
-            console.log(idDict2);
-        } else {
-            delete idDict2[$(this).data('name')];
-        }
-        let amenityList = [];
-        for (const key in idDict2) {
-            if (idDict2[key] !== undefined) {
-                amenityList.push(key);
+    $('input[type="checkbox"]').change(function() {
+        let refClass;
+            switch ($(this).attr('id')) {
+                case "states_info":
+                    refClass = states;
+                    break;
+                case "amenities_info":
+                    refClass = amenities;
+                    break;
+                case "cities_info":
+                    refClass = cities;
+                    break;
             }
+            if ($(this).prop('checked')) {
+                refClass[$(this).data('name')] = $(this).data('id');
+            } else {
+            delete refClass[$(this).data('name')];
+            }
+        if ($(this).attr('id') === "amenities_info") {
+        $(".amenities h4").text(Object.keys(amenities).join(", "));
+        } else {
+            console.log(states, cities);
+            $(".locations h4").text(Object.keys(states).concat(Object.keys(cities)).join(", "));
         }
-        $(".locations h4").text(amenityList.length > 0 ? amenityList.join(',') : '\u00A0');
-    }); 
+    });
+    
 
     $('button').click(function () {
-        let List = Object.values(idDict);
-        let List2 = Object.values(idDict2);
-        let requestInfo = {
-            amenities: List,
-            locations: List2
-        };
-
-        if (List.length === 0) {
+        /*if (List.length === 0) {
             $("section.places").empty();
             return;
-        }
-
+        }*/
         $.post({
             url: "http://localhost:5001/api/v1/places_search",
-            data: JSON.stringify(requestInfo),
+            data: JSON.stringify({
+                amenities: Object.values(amenities),
+                states: Object.values(states),
+                cities: Object.values(cities)
+            }),
             headers: {
                 "Content-Type": "application/json"
             },

@@ -9,7 +9,7 @@
     <link type="text/css" rel="stylesheet" href="../static/styles/8-places.css?{{ cache_id }}">
     <link rel="icon" href="../static/images/icon.png" />
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <script type="text/javascript" src="../static/scripts/100-hbnb.js?{{ cache_id }}"></script>
+    <script type="text/javascript" src="../static/scripts/101-hbnb.js?{{ cache_id }}"></script>
     <title>HBnB</title>
   </head>
   <body>
@@ -26,10 +26,10 @@
 	    <ul>
 	      {% for state in states %}
 	      <li>
-		<h2><input id="states_info" type="checkbox" data-id="{{ state[0].id }}" data-name="{{ state[0].name }}">{{ state[0].name }}:</h2>
+		<h2><input type="checkbox" data-id="{{ state[0].id }}" data-name="{{ state[0].name }}">{{ state[0].name }}:</h2>
 		<ul>
 		  {% for city in state[1] %}
-		  <li><input id="cities_info" type="checkbox" data-id="{{ city.id }}" data-name="{{ city.name }}">{{ city.name }}</li>
+		  <li><input type="checkbox" data-id="{{ city.id }}" data-name="{{ city.name }}">{{ city.name }}</li>
 		  {% endfor %}
 		</ul>
 	      </li>
@@ -43,11 +43,13 @@
 	  <div class="popover">
 	    <ul>
 	      {% for amenity in amenities %}
-	      <li><input id="amenities_info" type="checkbox" data-id="{{ amenity.id }}" data-name="{{ amenity.name }}"> {{ amenity.name }} </li>
+	      <li><input type="checkbox" data-id="{{ amenity.id }}" data-name="{{ amenity.name }}"> {{ amenity.name }} </li>
 	      {% endfor %}
 	    </ul>
 	  </div>
 	</div>
+    <div class=reviews data-place="{{ place.id }}">
+    </div>
 	<button type="button">Search</button>
       </section>
       <div class="placesh1"><h1>Places</h1></div>
