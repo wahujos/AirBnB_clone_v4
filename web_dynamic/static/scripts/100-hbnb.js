@@ -25,17 +25,22 @@ $(document).ready(function(){
         if ($(this).attr('id') === "amenities_info") {
         $(".amenities h4").text(Object.keys(amenities).join(", "));
         } else {
-            console.log(states, cities);
             $(".locations h4").text(Object.keys(states).concat(Object.keys(cities)).join(", "));
         }
+    });
+
+    $.post({
+        url: "http://localhost:5001/api/v1/places_search",
+        data: JSON.stringify({}),
+        headers: {
+            "Content-Type": "application/json"
+        },
+        success: addToHtml,
+        dataType: "json"
     });
     
 
     $('button').click(function () {
-        /*if (List.length === 0) {
-            $("section.places").empty();
-            return;
-        }*/
         $.post({
             url: "http://localhost:5001/api/v1/places_search",
             data: JSON.stringify({

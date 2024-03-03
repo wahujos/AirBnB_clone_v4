@@ -1,63 +1,10 @@
 
 $(document).ready(function(){
-    let idDict = {};
-    $('.amenities input[type="checkbox"]').change(function(){
-        if ($(this).prop('checked')) {
-            idDict[$(this).data('name')] = $(this).data('id');
-            console.log(idDict);
-        } else {
-            delete idDict[$(this).data('name')];
-        }
-        let amenityList = [];
-        for (const key in idDict) {
-            if (idDict[key] !== undefined) {
-                amenityList.push(key);
-            }
-        }
-        $(".amenities h4").text(amenityList.length > 0 ? amenityList.join(',') : '\u00A0');
-    });
-
-    let idDict2 = {};
-    $('.locations input[type="checkbox"]').change(function(){
-        if ($(this).prop('checked')) {
-            idDict2[$(this).data('name')] = $(this).data('id');
-            console.log(idDict2);
-        } else {
-            delete idDict2[$(this).data('name')];
-        }
-        let amenityList = [];
-        for (const key in idDict2) {
-            if (idDict2[key] !== undefined) {
-                amenityList.push(key);
-            }
-        }
-        $(".locations h4").text(amenityList.length > 0 ? amenityList.join(',') : '\u00A0');
-    }); 
-
-    $('button').click(function () {
-        let List = Object.values(idDict);
-        let List2 = Object.values(idDict2);
-        let requestInfo = {
-            amenities: List,
-            locations: List2
-        };
-
-        if (List.length === 0) {
-            $("section.places").empty();
-            return;
-        }
-
-        $.post({
-            url: "http://localhost:5001/api/v1/places_search",
-            data: JSON.stringify(requestInfo),
-            headers: {
-                "Content-Type": "application/json"
-            },
-            success: addToHtml,
-            dataType: "json"
-        });
-    });
-
+    const states = {};
+    const amenities = {};
+    const cities = {};
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
     $.getJSON("http://localhost:5001/api/v1/status", (response) => {
         console.log(response);
         if (response.status === 'OK') {
@@ -67,11 +14,67 @@ $(document).ready(function(){
         }
     });
 
+    $('input[type="checkbox"]').change(function() {
+        let refClass;
+            switch ($(this).attr('id')) {
+                case "states_info":
+                    refClass = states;
+                    break;
+                case "amenities_info":
+                    refClass = amenities;
+                    break;
+                case "cities_info":
+                    refClass = cities;
+                    break;
+            }
+            if ($(this).prop('checked')) {
+                refClass[$(this).data('name')] = $(this).data('id');
+            } else {
+            delete refClass[$(this).data('name')];
+            }
+        if ($(this).attr('id') === "amenities_info") {
+        $(".amenities h4").text(Object.keys(amenities).join(", "));
+        } else {
+            $(".locations h4").text(Object.keys(states).concat(Object.keys(cities)).join(", "));  
+        }
+    });
+    
+     $.post({
+            url: "http://localhost:5001/api/v1/places_search",
+            data: JSON.stringify({}),
+            headers: {
+                "Content-Type": "application/json"
+            },
+            success: addToHtml,
+            dataType: "json"
+        });
+    
+
+    $('button').click(function () {
+        /*if (List.length === 0) {
+            $("section.places").empty();
+            return;
+        }*/
+        $.post({
+            url: "http://localhost:5001/api/v1/places_search",
+            data: JSON.stringify({
+                amenities: Object.values(amenities),
+                states: Object.values(states),
+                cities: Object.values(cities)
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            },
+            success: addToHtml,
+            dataType: "json"
+        });
+    });
+
     function addToHtml(response) {
         $("section.places").empty();
         response.forEach(place => {
-            $("section.places").append(
-                `<article>
+            const article = $(`
+                <article>
                     <div class="title_box">
                         <h2>${place.name}</h2>
                         <div class="price_by_night">$${place.price_by_night}</div>
@@ -84,28 +87,51 @@ $(document).ready(function(){
                     <div class="description">
                         ${place.description}
                     </div>
-                </article>
-                <div class=reviews data-place=${ place.id }></div>getReviews(place.id);`
+                    <div class="reviews" data-place="${place.id}">
+                        <h2>Reviews <span class="toggle_review">show</span></h2>
+                        <ul></ul>
+                    </div>
+                </article>`
             );
-        });
-    }
-
-    function getReviews(placeId) {
-        $.getJSON(`http://localhost:5001/api/v1/places/${placeId}/reviews`, (response) => {
-            $("section.reviews").empty();
-            response.forEach(review => {
-                $("section.reviews").append(
-                    `<h2>${review.title}</h2> <span>show</span>
-                    <ul>
-                        <li>
-                            <h3>${review.user}</h3>
-                            <p>${review.text}</p>
-                        </li>
-                    </ul>`
-                );
+            $("section.places").append(article);
+            const reviewsSection = article.find('.reviews');
+            const toggleButton = reviewsSection.find('.toggle_review');
+            toggleButton.click(function() {
+                const reviewList = reviewsSection.find('ul');
+                if (reviewList.is(':visible')) {
+                    reviewList.hide();
+                    toggleButton.text('show');
+                } else {
+                    getReviews(place.id, reviewList, toggleButton);
+                }
             });
         });
     }
     
-    });
-
+    function getReviews(placeId, reviewList, toggleButton) {
+        $.getJSON(
+            `http://localhost:5001/api/v1/places/${placeId}/reviews`,
+            (data) => {
+                reviewList.empty();
+                data.forEach((review) => {
+                    $.getJSON(
+                        `http://localhost:5001/api/v1/users/${review.user_id}`,
+                        (user) => {
+                            const reviewDate = new Date(review.created_at);
+                            const formattedDate = `${reviewDate.getDate()} ${months[reviewDate.getMonth()]} ${reviewDate.getFullYear()}`;
+                            const reviewItem = $(`
+                                <li>
+                                    <h3>From ${user.first_name} ${user.last_name} the ${formattedDate}</h3>
+                                    <p>${review.text}</p>
+                                </li>`
+                            );
+                            reviewList.append(reviewItem);
+                        }
+                    );
+                });
+                reviewList.show();
+                toggleButton.text('hide');
+            }
+        );
+    }
+});    
